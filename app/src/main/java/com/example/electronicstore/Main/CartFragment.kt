@@ -1,27 +1,24 @@
 package com.example.electronicstore.Main
 
+import android.annotation.SuppressLint
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.example.electronicstore.Database.CartAdapter
+import com.example.electronicstore.Database.Product
+import com.example.electronicstore.Database.CartViewModel
 import com.example.electronicstore.R
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
-
-/**
- * A simple [Fragment] subclass.
- * Use the [CartFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class CartFragment : Fragment() {
-    // TODO: Rename and change types of parameters
 
+    private lateinit var cartViewModel: CartViewModel // ViewModel to hold product list
 
-
+    @SuppressLint("MissingInflatedId")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -30,5 +27,45 @@ class CartFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_cart, container, false)
     }
 
+    // This is called after the view has been created
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
+        // Initialize the RecyclerView and ViewModel
+        val recyclerView = view.findViewById<RecyclerView>(R.id.itemRecycleView)
+        recyclerView.layoutManager = LinearLayoutManager(context)
+
+        // Retrieve the ViewModel
+        cartViewModel = ViewModelProvider(this).get(CartViewModel::class.java)
+
+        // Check if there are already products in the ViewModel
+        val productList = cartViewModel.productList
+
+        // If no data exists in the ViewModel, add a default product
+        if (productList.isEmpty()) {
+            val productNames = arguments?.getString("name1") ?: "Unknown"
+            val productPrices = arguments?.getInt("price1") ?: 0
+            val productImages = arguments?.getInt("imageUrl1") ?: 0
+
+            // Create and add the product to the list
+            val product = Product(
+                name = productNames,
+                price = productPrices,
+                imageUrl = productImages,
+                description = "" // Optional description
+            )
+            cartViewModel.addProductToCart(product)
+        }
+
+        // Set up the adapter with the product list from the ViewModel
+        val adapter = CartAdapter(cartViewModel.productList)
+        recyclerView.adapter = adapter
+    }
+
+    // Function to add more products dynamically
+    fun addProductToCart(product: Product) {
+        cartViewModel.addProductToCart(product)
+        // Notify the adapter that the data has changed
+        view?.findViewById<RecyclerView>(R.id.itemRecycleView)?.adapter?.notifyDataSetChanged()
+    }
 }
